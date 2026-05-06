@@ -53,11 +53,11 @@
   .stat-lbl { font-size: 12px; color: var(--text2); margin-bottom: 3px; }
   .stat-val { font-size: 20px; font-weight: 500; }
   .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
-  .b-ok { background: var(--green-bg); color: var(--green-text); }
-  .b-man { background: var(--blue-bg); color: var(--blue-text); }
-  .b-warn { background: var(--amber-bg); color: var(--amber-text); }
-  .b-err { background: var(--red-bg); color: var(--red-text); }
-  .b-gray { background: var(--gray-bg); color: var(--gray-text); }
+  .b-ok   { background: var(--green-bg);  color: var(--green-text);  }
+  .b-man  { background: var(--blue-bg);   color: var(--blue-text);   }
+  .b-warn { background: var(--amber-bg);  color: var(--amber-text);  }
+  .b-err  { background: var(--red-bg);    color: var(--red-text);    }
+  .b-gray { background: var(--gray-bg);   color: var(--gray-text);   }
   .b-hist { background: var(--purple-bg); color: var(--purple-text); }
   .upload-box { border: 1px dashed var(--border2); border-radius: var(--radius); padding: 1.5rem; text-align: center; cursor: pointer; position: relative; transition: background .15s; }
   .upload-box:hover { background: var(--bg2); }
@@ -70,12 +70,12 @@
   tr:last-child td { border-bottom: none; }
   .btn { font-size: 13px; padding: 6px 14px; border: 0.5px solid var(--border2); border-radius: var(--radius); cursor: pointer; background: transparent; color: var(--text); transition: background .15s; }
   .btn:hover { background: var(--bg2); }
-  .btn-p { background: var(--text); color: var(--bg); border-color: transparent; }
+  .btn-p   { background: var(--text); color: var(--bg); border-color: transparent; }
   .btn-p:hover { opacity: .85; }
-  .btn-sm { font-size: 12px; padding: 4px 10px; }
-  .btn-azul { background: var(--blue-bg); color: var(--blue-text); border-color: var(--blue-border); }
-  .btn-roxo { background: var(--purple-bg); color: var(--purple-text); border-color: var(--purple-border); }
-  .btn-red { background: var(--red-bg); color: var(--red-text); border-color: var(--red-border); }
+  .btn-sm  { font-size: 12px; padding: 4px 10px; }
+  .btn-azul { background: var(--blue-bg);   color: var(--blue-text);   border-color: var(--blue-border);  }
+  .btn-roxo { background: var(--purple-bg); color: var(--purple-text); border-color: var(--purple-border);}
+  .btn-red  { background: var(--red-bg);    color: var(--red-text);    border-color: var(--red-border);   }
   .frow { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
   .info-box { background: var(--bg2); border-radius: var(--radius); padding: .75rem 1rem; font-size: 12px; color: var(--text2); margin-bottom: 12px; line-height: 1.7; }
   .mes-pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 10px; border-radius: 20px; border: 0.5px solid var(--border); background: var(--bg2); color: var(--text2); margin: 2px; }
@@ -89,6 +89,9 @@
   .item-sel { border: 0.5px solid var(--border); border-radius: var(--radius); padding: 8px 10px; margin-bottom: 6px; cursor: pointer; font-size: 12px; }
   .item-sel:hover { background: var(--bg2); }
   .item-sel.marcado { background: var(--blue-bg); border-color: var(--blue-border); }
+  /* Separador de grupo no modal */
+  .modal-group-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 6px; padding-bottom: 4px; border-bottom: 0.5px solid var(--border); }
+  .modal-group-label:first-child { margin-top: 0; }
   input[type="number"], input[type="month"] {
     padding: 5px 8px; border: 0.5px solid var(--border2); border-radius: var(--radius);
     background: var(--bg); color: var(--text); font-size: 13px; font-family: var(--font);
@@ -124,8 +127,8 @@
     <div class="sec-title"><i class="ti ti-upload"></i> Carregar novo mês</div>
     <div class="info-box">
       <i class="ti ti-sparkles" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>
-      <strong>Lógica:</strong> Crédito = lançamento da nota fiscal (valor negativo na planilha) &nbsp;·&nbsp; Débito = pagamento (valor positivo na planilha).<br>
-      Pendentes de meses anteriores são cruzados automaticamente ao carregar um novo mês.
+      <strong>Lógica:</strong> Crédito = lançamento da nota fiscal (valor negativo) &nbsp;·&nbsp; Débito = pagamento (valor positivo).<br>
+      Pendentes de meses anteriores são cruzados automaticamente. Ajustes também podem ser vinculados manualmente.
     </div>
     <div class="upload-box">
       <input type="file" id="fileIn" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" onchange="carregarArquivo(this)">
@@ -169,6 +172,7 @@
         <span class="legend-item"><span class="legend-dot" style="background:#534AB7"></span>Conciliado entre meses</span>
         <span class="legend-item"><span class="legend-dot" style="background:#BA7517"></span>Diferença de valor</span>
         <span class="legend-item"><span class="legend-dot" style="background:#993C1D"></span>Pendente</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#9a9893"></span>Ajuste</span>
       </div>
 
       <div class="frow">
@@ -192,14 +196,14 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// ─── Estado global ───────────────────────────────────────────────────────────
-let historico = {};     // { "2025-02": [ grupo, ... ] }
+// ─── Estado global ────────────────────────────────────────────────────────────
+let historico = {};
 let resultados = [];
 let manualPendente = null;
-let vinculos = {};      // { chaveBaseA: chaveBaseB }
+let vinculos = {};
 let dadosPendentes = null;
 
-// ─── Utilitários ─────────────────────────────────────────────────────────────
+// ─── Utilitários ──────────────────────────────────────────────────────────────
 function parsVal(v) {
   if (typeof v === 'number') return v;
   return parseFloat(String(v).replace(/[^\d,.\-]/g, '').replace(',', '.')) || 0;
@@ -210,14 +214,13 @@ function normalizar(s) {
   s = s.replace(/[^A-Za-zÀ-ÿ0-9 ]/g, ' ');
   return s.replace(/\s+/g, ' ').trim().toUpperCase();
 }
-function extrairNFNovo(s) { const m = s.match(/N[ºO°]\s*\.?\s*0*(\d+)(?:\/\d+)?/i); return m ? m[1] : ''; }
+function extrairNFNovo(s)   { const m = s.match(/N[ºO°]\s*\.?\s*0*(\d+)(?:\/\d+)?/i); return m ? m[1] : ''; }
 function extrairNFAntigo(s) { const m = s.match(/(?:NF[SE\-\s]*e?|FATURA\s*N[ºO°]?)\s*\.?\s*(\d[\d\.]*)/i); return m ? m[1].replace(/\./g, '') : ''; }
-function ehPadraoNovo(s) { return /^(N[ºO°]|NOTA\s+FISCAL)/i.test(s.trim()); }
-function ehAjuste(s) { return /ajuste|pagamento\s+a\s+maior|pagamento\s+a\s+menor|desconto|estorno/i.test(s); }
+function ehPadraoNovo(s)    { return /^(N[ºO°]|NOTA\s+FISCAL)/i.test(s.trim()); }
+function ehAjuste(s)        { return /ajuste|pagamento\s+a\s+maior|pagamento\s+a\s+menor|desconto|estorno/i.test(s); }
 function extrairFornNovo(s, val) {
-  // val negativo = NF; val positivo = pagamento
-  if (val < 0) { const m = s.match(/\bDE\s+(.+)$/i); return m ? m[1].trim() : s; }
-  else { const m = s.match(/\/\d+\s*[-–]\s*(.+)$/i); return m ? m[1].trim() : s; }
+  if (val < 0) { const m = s.match(/\bDE\s+(.+)$/i);        return m ? m[1].trim() : s; }
+  else         { const m = s.match(/\/\d+\s*[-–]\s*(.+)$/i); return m ? m[1].trim() : s; }
 }
 function detectarPadrao(dados, cCompl) {
   let novo = 0, antigo = 0;
@@ -250,9 +253,6 @@ function carregarArquivo(input) {
 }
 
 // ─── Parsear grupos de um mês ─────────────────────────────────────────────────
-// LÓGICA CORRIGIDA:
-//   valor negativo na planilha → lançamento da NF → CRÉDITO
-//   valor positivo na planilha → pagamento         → DÉBITO
 function parsearGrupos(dados, mes) {
   const cols = Object.keys(dados[0] || {});
   const ci = k => cols.find(c => c.toLowerCase().includes(k.toLowerCase())) || cols[0];
@@ -271,15 +271,23 @@ function parsearGrupos(dados, mes) {
     const dat   = String(row[cDat] || '');
     if (!compl || compl === 'Total' || compl.startsWith('Filtro')) return;
 
+    // ── Ajustes: chave única por descrição + mês ──────────────────────────────
     if (ehAjuste(compl)) {
-      const chave = mes + '|__ajuste__' + compl;
-      if (!mapa[chave]) mapa[chave] = { chave, nf: '', forn: compl, credito: 0, debito: 0, status: 'ajuste', linhas: [], mes };
+      // Cada linha de ajuste vira um grupo próprio para poder ser vinculada individualmente
+      const chave = mes + '|__ajuste__' + idx + '_' + compl;
+      if (!mapa[chave]) mapa[chave] = {
+        chave, nf: '', forn: compl,
+        credito: 0, debito: 0,
+        status: 'ajuste', linhas: [], mes,
+        isAjuste: true
+      };
       mapa[chave].linhas.push({ idx, compl, val, dat });
-      if (val < 0) mapa[chave].credito += Math.abs(val);  // NF negativa = crédito
-      else         mapa[chave].debito  += val;              // pagamento positivo = débito
+      if (val < 0) mapa[chave].credito += Math.abs(val);
+      else         mapa[chave].debito  += val;
       return;
     }
 
+    // ── Lançamentos normais ───────────────────────────────────────────────────
     let chave, nf, forn;
     if (padrao === 'novo') {
       nf = extrairNFNovo(compl);
@@ -301,20 +309,15 @@ function parsearGrupos(dados, mes) {
 
     if (!mapa[chave]) mapa[chave] = { chave, nf, forn, credito: 0, debito: 0, status: '', linhas: [], mes };
     mapa[chave].linhas.push({ idx, compl, val, dat });
-
-    // valor negativo = nota fiscal = CRÉDITO
-    // valor positivo = pagamento   = DÉBITO
     if (val < 0) mapa[chave].credito += Math.abs(val);
     else         mapa[chave].debito  += val;
-
-    // Preferir o nome do fornecedor vindo da NF (valor negativo)
     if (val < 0 || !mapa[chave].forn) mapa[chave].forn = forn;
   });
 
   return mapa;
 }
 
-// ─── Processar mês carregado ──────────────────────────────────────────────────
+// ─── Processar mês ────────────────────────────────────────────────────────────
 function processarMes() {
   if (!dadosPendentes) return;
   const mes = document.getElementById('mesRef').value || 'sem-mes';
@@ -328,16 +331,18 @@ function processarMes() {
 function consolidarTudo() {
   const tol = parseFloat(document.getElementById('tol').value) || 0.05;
 
-  // Agrupa por chave base (sem prefixo de mês em ajustes)
   const mapaGlobal = {};
+
   Object.entries(historico).forEach(([mes, grupos]) => {
     grupos.forEach(g => {
-      const chaveBase = g.chave.startsWith(mes + '|') ? g.chave.slice(mes.length + 1) : g.chave;
+      // Ajustes mantêm chave única (não devem ser agrupados entre meses automaticamente)
+      const chaveBase = g.isAjuste ? g.chave : (g.chave.startsWith(mes + '|') ? g.chave.slice(mes.length + 1) : g.chave);
+
       if (!mapaGlobal[chaveBase]) {
         mapaGlobal[chaveBase] = {
           chaveBase, nf: g.nf, forn: g.forn,
           credito: 0, debito: 0, status: '',
-          meses: [], linhas: [], isAjuste: g.status === 'ajuste'
+          meses: [], linhas: [], isAjuste: !!g.isAjuste
         };
       }
       const m = mapaGlobal[chaveBase];
@@ -349,29 +354,31 @@ function consolidarTudo() {
     });
   });
 
-  // Aplicar vínculos manuais
+  // Aplicar vínculos manuais (funciona para ajustes e lançamentos normais)
   Object.entries(vinculos).forEach(([chA, chB]) => {
     if (mapaGlobal[chA] && mapaGlobal[chB]) {
       mapaGlobal[chA].credito += mapaGlobal[chB].credito;
       mapaGlobal[chA].debito  += mapaGlobal[chB].debito;
-      mapaGlobal[chA].meses = [...new Set([...mapaGlobal[chA].meses, ...mapaGlobal[chB].meses])];
+      mapaGlobal[chA].meses    = [...new Set([...mapaGlobal[chA].meses, ...mapaGlobal[chB].meses])];
       mapaGlobal[chB]._absorvido = true;
     }
   });
 
   resultados = Object.values(mapaGlobal).filter(g => !g._absorvido).map(g => {
-    if (g.isAjuste) return { ...g, diff: Math.abs(g.debito - g.credito), status: 'ajuste' };
-
-    const diff       = Math.abs(g.debito - g.credito);
+    const diff      = Math.abs(g.debito - g.credito);
     const cruzaMeses = g.meses.length > 1;
     const vinculado  = Object.keys(vinculos).includes(g.chaveBase) || Object.values(vinculos).includes(g.chaveBase);
+
+    // Ajustes: se vinculado manualmente → manual; se não → ajuste (mas pode ser vinculado)
+    if (g.isAjuste) {
+      const status = vinculado && diff <= tol ? 'manual' : 'ajuste';
+      return { ...g, diff, status };
+    }
 
     let status;
     if      (vinculado  && diff <= tol) status = 'manual';
     else if (cruzaMeses && diff <= tol) status = 'cross';
-    // sem_pagto: tem NF (crédito) mas não tem pagamento (débito)
     else if (!g.debito  && g.credito)   status = 'sem_pagto';
-    // sem_nf: tem pagamento (débito) mas não tem NF (crédito)
     else if (!g.credito && g.debito)    status = 'sem_nf';
     else if (diff > tol)                status = 'diff';
     else                                status = 'ok';
@@ -412,7 +419,7 @@ function removerMes(mes) {
 function limparHistorico() {
   if (!Object.keys(historico).length) return;
   if (!confirm('Limpar todo o histórico?')) return;
-  historico = {}; vinculos = {}; resultados = {}; dadosPendentes = null;
+  historico = {}; vinculos = {}; resultados = []; dadosPendentes = null;
   renderMeses();
   document.getElementById('resBlock').style.display = 'none';
   document.getElementById('nomearq').textContent = 'Clique para selecionar o arquivo Excel';
@@ -425,14 +432,15 @@ function limparHistorico() {
 function renderStats() {
   const sem   = resultados.filter(r => r.status !== 'ajuste');
   const ok    = sem.filter(r => r.status === 'ok').length;
-  const man   = sem.filter(r => r.status === 'manual').length;
+  const man   = resultados.filter(r => r.status === 'manual').length; // inclui ajustes manuais
   const cross = sem.filter(r => r.status === 'cross').length;
   const pend  = sem.filter(r => ['diff', 'sem_pagto', 'sem_nf'].includes(r.status)).length;
+  const ajPend = resultados.filter(r => r.status === 'ajuste').length;
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat"><div class="stat-lbl">Lançamentos</div><div class="stat-val">${sem.length}</div></div>
     <div class="stat"><div class="stat-lbl">Conciliados</div><div class="stat-val" style="color:var(--ok)">${ok + man + cross}</div></div>
     <div class="stat"><div class="stat-lbl">Entre meses</div><div class="stat-val" style="color:#3C3489">${cross}</div></div>
-    <div class="stat"><div class="stat-lbl">Pendentes</div><div class="stat-val" style="color:var(--err)">${pend}</div></div>`;
+    <div class="stat"><div class="stat-lbl">Pendentes</div><div class="stat-val" style="color:var(--err)">${pend + ajPend}</div></div>`;
 }
 
 // ─── Render tabela ────────────────────────────────────────────────────────────
@@ -441,10 +449,11 @@ function renderTabela(list) {
     document.getElementById('tabWrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px">Nenhum item</div>';
     return;
   }
-  const podeConcManual = r => ['sem_pagto', 'sem_nf', 'diff'].includes(r.status);
+
+  // Pode vincular: pendentes normais E ajustes ainda não vinculados
+  const podeConcManual = r => ['sem_pagto', 'sem_nf', 'diff', 'ajuste'].includes(r.status);
   const podeDesfazer   = r => r.status === 'manual';
 
-  // Labels e badges atualizados com nova nomenclatura
   const statusLabel = {
     ok: 'Conciliado', manual: 'Manual', cross: 'Entre meses',
     diff: 'Diferença', sem_pagto: 'Sem pagamento', sem_nf: 'Pagto s/ NF', ajuste: 'Ajuste'
@@ -460,11 +469,11 @@ function renderTabela(list) {
       <col style="width:55px"><col style="width:150px">
       <col style="width:105px"><col style="width:105px">
       <col style="width:80px"><col style="width:115px">
-      <col style="width:70px"><col style="width:110px">
+      <col style="width:70px"><col style="width:115px">
     </colgroup>
     <thead>
       <tr>
-        <th>NF</th><th>Fornecedor</th>
+        <th>NF</th><th>Fornecedor / Descrição</th>
         <th>Crédito (NF)</th><th>Débito (Pagto)</th>
         <th>Diferença</th><th>Status</th><th>Meses</th><th></th>
       </tr>
@@ -473,9 +482,15 @@ function renderTabela(list) {
       const mesTag = r.meses && r.meses.length > 1
         ? `<span title="${r.meses.sort().join(', ')}" style="font-size:11px;color:#3C3489;font-weight:500">${r.meses.length} meses</span>`
         : `<span style="font-size:11px;color:var(--text2)">${(r.meses && r.meses[0]) || ''}</span>`;
+
+      // Ajustes: trunca a descrição longa para exibir mais limpo
+      const descExibir = r.isAjuste
+        ? r.forn.replace(/^.*?__ajuste__\d+_/i, '').substring(0, 60)
+        : r.forn;
+
       return `<tr>
-        <td style="font-family:var(--mono);font-size:12px" title="${r.nf}">${r.nf || '—'}</td>
-        <td title="${r.forn}">${r.forn}</td>
+        <td style="font-family:var(--mono);font-size:12px" title="${r.nf}">${r.nf || (r.isAjuste ? '<span style="font-size:10px;color:var(--text2)">ajuste</span>' : '—')}</td>
+        <td title="${r.forn}">${descExibir}</td>
         <td>${r.credito ? fmt(r.credito) : '—'}</td>
         <td>${r.debito  ? fmt(r.debito)  : '—'}</td>
         <td style="color:${r.diff < 0.06 ? 'var(--ok)' : 'var(--err)'};font-weight:500">${r.diff > 0.005 ? fmt(r.diff) : '—'}</td>
@@ -494,31 +509,63 @@ function renderTabela(list) {
 function abrirModal(chave) {
   manualPendente = { chave, selecionado: null };
   const origem = resultados.find(r => r.chaveBase === chave);
-  document.getElementById('modalTitle').textContent = 'Vincular manualmente — ' + origem.forn;
-  document.getElementById('modalSub').textContent =
+
+  document.getElementById('modalTitle').textContent = 'Vincular manualmente';
+  document.getElementById('modalSub').innerHTML =
+    `<strong>${origem.isAjuste ? 'Ajuste' : 'NF ' + (origem.nf || 's/n')}</strong>: ${origem.forn.substring(0, 80)}<br>` +
     (origem.credito ? 'NF: ' + fmt(origem.credito) : '') +
     (origem.debito  ? ' | Pagamento: ' + fmt(origem.debito) : '') +
-    ' | Selecione o lançamento correspondente abaixo';
+    ' | Mês: ' + (origem.meses || []).join(', ');
 
-  const candidatos = resultados.filter(r =>
-    r.chaveBase !== chave && !['ok', 'manual', 'ajuste', 'cross'].includes(r.status)
+  // Candidatos: pendentes normais + ajustes pendentes (exceto o próprio)
+  const candidatosNormais = resultados.filter(r =>
+    r.chaveBase !== chave &&
+    !r.isAjuste &&
+    !['ok', 'manual', 'cross'].includes(r.status)
+  );
+  const candidatosAjuste = resultados.filter(r =>
+    r.chaveBase !== chave &&
+    r.isAjuste &&
+    r.status === 'ajuste' // apenas ajustes ainda não vinculados
   );
 
-  document.getElementById('modalLista').innerHTML = candidatos.length
-    ? candidatos.map(c => `
-      <div class="item-sel" onclick="selecionarCandidato('${c.chaveBase.replace(/'/g, "\\'")}',this)">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <span style="font-weight:500">${c.forn}</span>
-          <span class="badge ${c.status === 'diff' ? 'b-warn' : 'b-err'}">${{diff:'Diferença',sem_pagto:'Sem pagamento',sem_nf:'Pagto s/ NF'}[c.status] || c.status}</span>
-        </div>
-        <div style="font-size:11px;color:var(--text2);margin-top:3px">
-          NF ${c.nf || 's/n'} &nbsp;·&nbsp; ${c.meses ? c.meses.join(', ') : ''} &nbsp;·&nbsp;
-          NF: ${c.credito ? fmt(c.credito) : '—'} &nbsp;·&nbsp; Pagto: ${c.debito ? fmt(c.debito) : '—'}
-        </div>
-      </div>`).join('')
-    : '<div style="text-align:center;padding:1rem;color:var(--text2);font-size:12px">Não há lançamentos pendentes para vincular.</div>';
+  let html = '';
 
+  if (candidatosNormais.length) {
+    html += '<div class="modal-group-label"><i class="ti ti-file-invoice" style="vertical-align:-2px;margin-right:4px"></i>Lançamentos pendentes</div>';
+    html += candidatosNormais.map(c => itemModalHTML(c)).join('');
+  }
+
+  if (candidatosAjuste.length) {
+    html += '<div class="modal-group-label"><i class="ti ti-adjustments-horizontal" style="vertical-align:-2px;margin-right:4px"></i>Ajustes pendentes</div>';
+    html += candidatosAjuste.map(c => itemModalHTML(c)).join('');
+  }
+
+  if (!html) {
+    html = '<div style="text-align:center;padding:1rem;color:var(--text2);font-size:12px">Não há lançamentos ou ajustes pendentes para vincular.</div>';
+  }
+
+  document.getElementById('modalLista').innerHTML = html;
   document.getElementById('modalWrap').style.display = 'flex';
+}
+
+function itemModalHTML(c) {
+  const label = c.isAjuste ? 'Ajuste' : ({ diff: 'Diferença', sem_pagto: 'Sem pagamento', sem_nf: 'Pagto s/ NF' }[c.status] || c.status);
+  const badge = c.isAjuste ? 'b-gray' : (c.status === 'diff' ? 'b-warn' : 'b-err');
+  const desc  = c.isAjuste ? c.forn.substring(0, 70) : c.forn;
+  return `
+    <div class="item-sel" onclick="selecionarCandidato('${c.chaveBase.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+        <span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.forn}">${desc}</span>
+        <span class="badge ${badge}" style="flex-shrink:0">${label}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text2);margin-top:3px">
+        ${c.isAjuste ? '' : 'NF ' + (c.nf || 's/n') + ' &nbsp;·&nbsp; '}
+        ${(c.meses || []).join(', ')} &nbsp;·&nbsp;
+        ${c.credito ? 'NF: ' + fmt(c.credito) : ''}
+        ${c.debito  ? ' Pagto: ' + fmt(c.debito) : ''}
+      </div>
+    </div>`;
 }
 
 function selecionarCandidato(chave, el) {
