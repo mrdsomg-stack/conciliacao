@@ -411,8 +411,9 @@ function renderTabela(list) {
   const sLabel = { ok:'Conciliado', manual:'Manual', cross:'Entre meses', diff:'Diferença', sem_pagto:'Sem pagamento', sem_nf:'Pagto s/ NF', ajuste:'Ajuste' };
   const sBadge = { ok:'b-ok', manual:'b-man', cross:'b-hist', diff:'b-warn', sem_pagto:'b-err', sem_nf:'b-err', ajuste:'b-gray' };
 
-  // Total da coluna Diferença
-  const totalDiff    = list.reduce((a, r) => a + (r.diff > 0.005 ? r.diff : 0), 0);
+  // Saldo líquido: credor (crédito > débito) = negativo, devedor (débito > crédito) = positivo
+  const saldoLiquido = r => r.diff <= 0.005 ? 0 : (r.credito > r.debito ? -r.diff : r.diff);
+  const saldoTotal   = list.reduce((a, r) => a + saldoLiquido(r), 0);
   const qtdComDiff   = list.filter(r => r.diff > 0.005).length;
 
   const linhas = list.map(r => {
@@ -435,11 +436,16 @@ function renderTabela(list) {
     </tr>`;
   }).join('');
 
+  const saldoAbs   = Math.abs(saldoTotal);
+  const saldoTipo  = saldoTotal < -0.005 ? 'Credor' : saldoTotal > 0.005 ? 'Devedor' : '';
+  const saldoCor   = saldoTotal < -0.005 ? 'var(--ok)' : saldoTotal > 0.005 ? 'var(--err)' : 'var(--text2)';
+  const saldoLabel = saldoTipo ? ` <span style="font-size:10px;font-weight:400;opacity:.75">(${saldoTipo})</span>` : '';
+
   const linhaTotalHTML = `<tr class="total-row">
     <td colspan="4" style="text-align:right;font-size:12px;color:var(--text2)">
-      Total das diferenças (${qtdComDiff} ${qtdComDiff === 1 ? 'item' : 'itens'}):
+      Saldo líquido (${qtdComDiff} ${qtdComDiff === 1 ? 'item' : 'itens'}):
     </td>
-    <td style="color:${totalDiff < 0.06 ? 'var(--ok)' : 'var(--err)'}">${totalDiff > 0.005 ? fmt(totalDiff) : '—'}</td>
+    <td style="color:${saldoCor}">${saldoAbs > 0.005 ? fmt(saldoAbs) + saldoLabel : '—'}</td>
     <td colspan="3"></td>
   </tr>`;
 
@@ -522,17 +528,21 @@ function fecharModalBg(e) { if (e.target === document.getElementById('modalWrap'
 // ── Exportar CSV ──────────────────────────────────────────────────────────────
 function exportCSV() {
   const lista = listaFiltrada();
-  const totalDiff = lista.reduce((a, r) => a + (r.diff > 0.005 ? r.diff : 0), 0);
+  const sl = r => r.diff <= 0.005 ? 0 : (r.credito > r.debito ? -r.diff : r.diff);
+  const saldoTotal = lista.reduce((a, r) => a + sl(r), 0);
+  const saldoTipo  = saldoTotal < -0.005 ? 'Credor' : saldoTotal > 0.005 ? 'Devedor' : 'Zerado';
   const h = ['NF','Fornecedor','Credito_NF','Debito_Pagamento','Diferenca','Status','Meses'];
   const rows = lista.map(r => [r.nf||'', r.forn, r.credito.toFixed(2), r.debito.toFixed(2), r.diff.toFixed(2), r.status, (r.meses||[]).join('/')]);
-  rows.push(['','TOTAL DAS DIFERENÇAS','','', totalDiff.toFixed(2),'','']);
+  rows.push(['', 'SALDO LIQUIDO (' + saldoTipo + ')', '', '', saldoTotal.toFixed(2), '', '']);
   baixarCSV([h, ...rows], 'conciliacao.csv');
 }
 
 // ── Exportar Excel ────────────────────────────────────────────────────────────
 function exportXLSX() {
   const lista = listaFiltrada();
-  const totalDiff  = lista.reduce((a, r) => a + (r.diff > 0.005 ? r.diff : 0), 0);
+  const slx = r => r.diff <= 0.005 ? 0 : (r.credito > r.debito ? -r.diff : r.diff);
+  const saldoTotalX = lista.reduce((a, r) => a + slx(r), 0);
+  const saldoTipoX  = saldoTotalX < -0.005 ? 'Credor' : saldoTotalX > 0.005 ? 'Devedor' : 'Zerado';
   const qtdComDiff = lista.filter(r => r.diff > 0.005).length;
   const sLabel = { ok:'Conciliado', manual:'Manual', cross:'Entre meses', diff:'Diferença', sem_pagto:'Sem pagamento', sem_nf:'Pagto s/ NF', ajuste:'Ajuste' };
 
@@ -550,7 +560,7 @@ function exportXLSX() {
     ]);
   });
   // Linha de total
-  wsData.push([`Total das diferenças (${qtdComDiff} itens)`, '', null, null, totalDiff > 0.005 ? totalDiff : null, '', '']);
+  wsData.push([`Saldo líquido (${qtdComDiff} itens) - ${saldoTipoX}`, '', null, null, Math.abs(saldoTotalX) > 0.005 ? saldoTotalX : null, '', '']);
 
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.aoa_to_sheet(wsData);
