@@ -52,7 +52,7 @@
   .stat { background: var(--bg2); border-radius: var(--radius); padding: .75rem 1rem; }
   .stat-lbl { font-size: 12px; color: var(--text2); margin-bottom: 3px; }
   .stat-val { font-size: 20px; font-weight: 500; }
-  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; }
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
   .b-ok   { background: var(--green-bg);  color: var(--green-text);  }
   .b-man  { background: var(--blue-bg);   color: var(--blue-text);   }
   .b-warn { background: var(--amber-bg);  color: var(--amber-text);  }
@@ -61,20 +61,33 @@
   .b-hist { background: var(--purple-bg); color: var(--purple-text); }
   .upload-box { border: 1px dashed var(--border2); border-radius: var(--radius); padding: 1.5rem; text-align: center; cursor: pointer; position: relative; transition: background .15s; }
   .upload-box:hover { background: var(--bg2); }
-  .chip { font-size: 12px; padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border); cursor: pointer; background: var(--bg); color: var(--text2); transition: all .15s; }
-  .chip.on { background: var(--bg2); color: var(--text); border-color: var(--border2); font-weight: 500; }
+
+  /* ── Chips ──────────────────────────────────────────────── */
+  .chip {
+    font-size: 12px; padding: 4px 12px; border-radius: 20px;
+    border: 0.5px solid var(--border); cursor: pointer;
+    background: var(--bg); color: var(--text2);
+    transition: all .12s; user-select: none;
+  }
+  .chip.on { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 500; }
+  .chip-todos.on { background: var(--bg2); color: var(--text); border-color: var(--border2); font-weight: 500; }
+
   table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
   th { text-align: left; font-weight: 500; color: var(--text2); padding: 7px 8px; border-bottom: 0.5px solid var(--border); font-size: 12px; }
   td { padding: 7px 8px; border-bottom: 0.5px solid var(--border); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   tr:hover td { background: var(--bg2); }
   tr:last-child td { border-bottom: none; }
+  tr.total-row td { border-top: 1.5px solid var(--border2); border-bottom: none; font-weight: 600; background: var(--bg2); font-size: 13px; }
+
   .btn { font-size: 13px; padding: 6px 14px; border: 0.5px solid var(--border2); border-radius: var(--radius); cursor: pointer; background: transparent; color: var(--text); transition: background .15s; }
   .btn:hover { background: var(--bg2); }
   .btn-p   { background: var(--text); color: var(--bg); border-color: transparent; }
   .btn-p:hover { opacity: .85; }
   .btn-sm  { font-size: 12px; padding: 4px 10px; }
   .btn-azul { background: var(--blue-bg);   color: var(--blue-text);   border-color: var(--blue-border);  }
-  .btn-roxo { background: var(--purple-bg); color: var(--purple-text); border-color: var(--purple-border);}
+  .btn-azul:hover { background: var(--blue-border); }
+  .btn-green { background: var(--green-bg); color: var(--green-text); border-color: var(--green-border); }
+  .btn-green:hover { background: var(--green-border); }
   .btn-red  { background: var(--red-bg);    color: var(--red-text);    border-color: var(--red-border);   }
   .frow { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
   .info-box { background: var(--bg2); border-radius: var(--radius); padding: .75rem 1rem; font-size: 12px; color: var(--text2); margin-bottom: 12px; line-height: 1.7; }
@@ -89,17 +102,14 @@
   .item-sel { border: 0.5px solid var(--border); border-radius: var(--radius); padding: 8px 10px; margin-bottom: 6px; cursor: pointer; font-size: 12px; }
   .item-sel:hover { background: var(--bg2); }
   .item-sel.marcado { background: var(--blue-bg); border-color: var(--blue-border); }
-  /* Separador de grupo no modal */
   .modal-group-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 6px; padding-bottom: 4px; border-bottom: 0.5px solid var(--border); }
   .modal-group-label:first-child { margin-top: 0; }
-  input[type="number"], input[type="month"] {
-    padding: 5px 8px; border: 0.5px solid var(--border2); border-radius: var(--radius);
-    background: var(--bg); color: var(--text); font-size: 13px; font-family: var(--font);
-  }
+  input[type="number"], input[type="month"] { padding: 5px 8px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg); color: var(--text); font-size: 13px; font-family: var(--font); }
   input[type="number"]:focus, input[type="month"]:focus { outline: 2px solid var(--blue-text); outline-offset: 1px; }
   .legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: 11px; color: var(--text2); margin-bottom: 8px; }
   .legend-item { display: flex; align-items: center; gap: 4px; }
   .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .filter-hint { font-size: 11px; color: var(--text2); font-style: italic; align-self: center; }
 </style>
 </head>
 <body>
@@ -110,7 +120,6 @@
     <p>Carregue planilhas mês a mês — pendentes anteriores são cruzados automaticamente com os novos.</p>
   </div>
 
-  <!-- Histórico -->
   <div class="card">
     <div class="sec-title"><i class="ti ti-history"></i> Histórico de meses carregados</div>
     <div id="mesesList" style="margin-bottom:10px;min-height:28px">
@@ -122,7 +131,6 @@
     </div>
   </div>
 
-  <!-- Carregar mês -->
   <div class="card">
     <div class="sec-title"><i class="ti ti-upload"></i> Carregar novo mês</div>
     <div class="info-box">
@@ -146,7 +154,6 @@
     </div>
   </div>
 
-  <!-- Modal -->
   <div class="modal-overlay" id="modalWrap" style="display:none" onclick="fecharModalBg(event)">
     <div class="modal">
       <div class="modal-title" id="modalTitle">Vincular manualmente</div>
@@ -160,32 +167,33 @@
     </div>
   </div>
 
-  <!-- Resultado -->
   <div id="resBlock" style="display:none">
     <div class="grid4" id="statsGrid"></div>
     <div class="card">
       <div class="sec-title"><i class="ti ti-table"></i> Resultado consolidado</div>
-
       <div class="legend">
         <span class="legend-item"><span class="legend-dot" style="background:#639922"></span>Conciliado</span>
         <span class="legend-item"><span class="legend-dot" style="background:#185FA5"></span>Vinculado manualmente</span>
-        <span class="legend-item"><span class="legend-dot" style="background:#534AB7"></span>Conciliado entre meses</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#534AB7"></span>Entre meses</span>
         <span class="legend-item"><span class="legend-dot" style="background:#BA7517"></span>Diferença de valor</span>
         <span class="legend-item"><span class="legend-dot" style="background:#993C1D"></span>Pendente</span>
         <span class="legend-item"><span class="legend-dot" style="background:#9a9893"></span>Ajuste</span>
       </div>
-
+      <div class="frow" style="margin-bottom:6px">
+        <button class="chip chip-todos on" id="chip-todos" onclick="toggleTodos()">Todos</button>
+        <button class="chip" id="chip-ok"        onclick="toggleChip('ok',this)">Conciliados</button>
+        <button class="chip" id="chip-manual"    onclick="toggleChip('manual',this)">Manuais</button>
+        <button class="chip" id="chip-cross"     onclick="toggleChip('cross',this)">Entre meses</button>
+        <button class="chip" id="chip-diff"      onclick="toggleChip('diff',this)">Com diferença</button>
+        <button class="chip" id="chip-sem_pagto" onclick="toggleChip('sem_pagto',this)">Sem pagamento</button>
+        <button class="chip" id="chip-sem_nf"    onclick="toggleChip('sem_nf',this)">Pagto s/ NF</button>
+        <button class="chip" id="chip-ajuste"    onclick="toggleChip('ajuste',this)">Ajustes</button>
+      </div>
       <div class="frow">
-        <button class="chip on" onclick="filt('todos',this)">Todos</button>
-        <button class="chip" onclick="filt('ok',this)">Conciliados</button>
-        <button class="chip" onclick="filt('manual',this)">Manuais</button>
-        <button class="chip" onclick="filt('cross',this)">Entre meses</button>
-        <button class="chip" onclick="filt('diff',this)">Com diferença</button>
-        <button class="chip" onclick="filt('sem_pagto',this)">Sem pagamento</button>
-        <button class="chip" onclick="filt('sem_nf',this)">Pagto s/ NF</button>
-        <button class="chip" onclick="filt('ajuste',this)">Ajustes</button>
+        <span class="filter-hint"><i class="ti ti-info-circle" style="vertical-align:-2px"></i> Clique em vários filtros para combinar</span>
         <div style="margin-left:auto;display:flex;gap:6px">
-          <button class="btn btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> Exportar CSV</button>
+          <button class="btn btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button>
+          <button class="btn btn-sm btn-green" onclick="exportXLSX()"><i class="ti ti-file-spreadsheet"></i> Excel</button>
         </div>
       </div>
       <div style="overflow-x:auto" id="tabWrap"></div>
@@ -196,14 +204,13 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
-// ─── Estado global ────────────────────────────────────────────────────────────
-let historico = {};
-let resultados = [];
+let historico      = {};
+let resultados     = [];
 let manualPendente = null;
-let vinculos = {};
+let vinculos       = {};
 let dadosPendentes = null;
+let filtrosAtivos  = new Set();
 
-// ─── Utilitários ──────────────────────────────────────────────────────────────
 function parsVal(v) {
   if (typeof v === 'number') return v;
   return parseFloat(String(v).replace(/[^\d,.\-]/g, '').replace(',', '.')) || 0;
@@ -219,7 +226,7 @@ function extrairNFAntigo(s) { const m = s.match(/(?:NF[SE\-\s]*e?|FATURA\s*N[ºO
 function ehPadraoNovo(s)    { return /^(N[ºO°]|NOTA\s+FISCAL)/i.test(s.trim()); }
 function ehAjuste(s)        { return /ajuste|pagamento\s+a\s+maior|pagamento\s+a\s+menor|desconto|estorno/i.test(s); }
 function extrairFornNovo(s, val) {
-  if (val < 0) { const m = s.match(/\bDE\s+(.+)$/i);        return m ? m[1].trim() : s; }
+  if (val < 0) { const m = s.match(/\bDE\s+(.+)$/i); return m ? m[1].trim() : s; }
   else         { const m = s.match(/\/\d+\s*[-–]\s*(.+)$/i); return m ? m[1].trim() : s; }
 }
 function detectarPadrao(dados, cCompl) {
@@ -232,7 +239,6 @@ function detectarPadrao(dados, cCompl) {
 }
 const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// ─── Carregar arquivo ─────────────────────────────────────────────────────────
 function carregarArquivo(input) {
   const file = input.files[0]; if (!file) return;
   document.getElementById('nomearq').textContent = file.name;
@@ -252,109 +258,65 @@ function carregarArquivo(input) {
   reader.readAsArrayBuffer(file);
 }
 
-// ─── Parsear grupos de um mês ─────────────────────────────────────────────────
 function parsearGrupos(dados, mes) {
   const cols = Object.keys(dados[0] || {});
   const ci = k => cols.find(c => c.toLowerCase().includes(k.toLowerCase())) || cols[0];
   const cCompl = ci('compl') || ci('hist') || cols[1];
   const cVal   = ci('valor') || ci('vlr')  || cols[2];
   const cDat   = ci('data')  || ci('dat')  || cols[0];
-
   const padrao = detectarPadrao(dados, cCompl);
   document.getElementById('padraoDet').innerHTML = 'Padrão: <strong>' + (padrao === 'novo' ? 'Novo' : 'Antigo') + '</strong>';
-
   const mapa = {};
-
   dados.forEach((row, idx) => {
     const compl = String(row[cCompl] || '').trim();
     const val   = parsVal(row[cVal]);
     const dat   = String(row[cDat] || '');
     if (!compl || compl === 'Total' || compl.startsWith('Filtro')) return;
-
-    // ── Ajustes: chave única por descrição + mês ──────────────────────────────
     if (ehAjuste(compl)) {
-      // Cada linha de ajuste vira um grupo próprio para poder ser vinculada individualmente
       const chave = mes + '|__ajuste__' + idx + '_' + compl;
-      if (!mapa[chave]) mapa[chave] = {
-        chave, nf: '', forn: compl,
-        credito: 0, debito: 0,
-        status: 'ajuste', linhas: [], mes,
-        isAjuste: true
-      };
+      if (!mapa[chave]) mapa[chave] = { chave, nf: '', forn: compl, credito: 0, debito: 0, status: 'ajuste', linhas: [], mes, isAjuste: true };
       mapa[chave].linhas.push({ idx, compl, val, dat });
-      if (val < 0) mapa[chave].credito += Math.abs(val);
-      else         mapa[chave].debito  += val;
+      if (val < 0) mapa[chave].credito += Math.abs(val); else mapa[chave].debito += val;
       return;
     }
-
-    // ── Lançamentos normais ───────────────────────────────────────────────────
     let chave, nf, forn;
     if (padrao === 'novo') {
-      nf = extrairNFNovo(compl);
-      if (!nf) return;
-      chave = 'NF|' + nf;
-      forn  = extrairFornNovo(compl, val);
+      nf = extrairNFNovo(compl); if (!nf) return;
+      chave = 'NF|' + nf; forn = extrairFornNovo(compl, val);
     } else {
       nf = extrairNFAntigo(compl);
-      if (nf) {
-        const norm = normalizar(compl);
-        const tok  = norm.split(' ').slice(0, 2).join(' ');
-        chave = 'NF|' + nf + '|' + tok;
-        forn  = norm;
-      } else {
-        chave = 'VAL|' + Math.abs(val).toFixed(2);
-        forn  = normalizar(compl);
-      }
+      if (nf) { const tok = normalizar(compl).split(' ').slice(0, 2).join(' '); chave = 'NF|' + nf + '|' + tok; forn = normalizar(compl); }
+      else    { chave = 'VAL|' + Math.abs(val).toFixed(2); forn = normalizar(compl); }
     }
-
     if (!mapa[chave]) mapa[chave] = { chave, nf, forn, credito: 0, debito: 0, status: '', linhas: [], mes };
     mapa[chave].linhas.push({ idx, compl, val, dat });
-    if (val < 0) mapa[chave].credito += Math.abs(val);
-    else         mapa[chave].debito  += val;
+    if (val < 0) mapa[chave].credito += Math.abs(val); else mapa[chave].debito += val;
     if (val < 0 || !mapa[chave].forn) mapa[chave].forn = forn;
   });
-
   return mapa;
 }
 
-// ─── Processar mês ────────────────────────────────────────────────────────────
 function processarMes() {
   if (!dadosPendentes) return;
   const mes = document.getElementById('mesRef').value || 'sem-mes';
-  const novosMapa = parsearGrupos(dadosPendentes, mes);
-  historico[mes] = Object.values(novosMapa);
-  consolidarTudo();
-  renderMeses();
+  historico[mes] = Object.values(parsearGrupos(dadosPendentes, mes));
+  consolidarTudo(); renderMeses();
 }
 
-// ─── Consolidar todos os meses ────────────────────────────────────────────────
 function consolidarTudo() {
   const tol = parseFloat(document.getElementById('tol').value) || 0.05;
-
   const mapaGlobal = {};
-
   Object.entries(historico).forEach(([mes, grupos]) => {
     grupos.forEach(g => {
-      // Ajustes mantêm chave única (não devem ser agrupados entre meses automaticamente)
       const chaveBase = g.isAjuste ? g.chave : (g.chave.startsWith(mes + '|') ? g.chave.slice(mes.length + 1) : g.chave);
-
-      if (!mapaGlobal[chaveBase]) {
-        mapaGlobal[chaveBase] = {
-          chaveBase, nf: g.nf, forn: g.forn,
-          credito: 0, debito: 0, status: '',
-          meses: [], linhas: [], isAjuste: !!g.isAjuste
-        };
-      }
+      if (!mapaGlobal[chaveBase]) mapaGlobal[chaveBase] = { chaveBase, nf: g.nf, forn: g.forn, credito: 0, debito: 0, status: '', meses: [], linhas: [], isAjuste: !!g.isAjuste };
       const m = mapaGlobal[chaveBase];
-      m.credito += g.credito;
-      m.debito  += g.debito;
+      m.credito += g.credito; m.debito += g.debito;
       m.linhas.push(...g.linhas);
       if (!m.meses.includes(mes)) m.meses.push(mes);
       if (g.credito > 0 || !m.forn) m.forn = g.forn;
     });
   });
-
-  // Aplicar vínculos manuais (funciona para ajustes e lançamentos normais)
   Object.entries(vinculos).forEach(([chA, chB]) => {
     if (mapaGlobal[chA] && mapaGlobal[chB]) {
       mapaGlobal[chA].credito += mapaGlobal[chB].credito;
@@ -363,18 +325,11 @@ function consolidarTudo() {
       mapaGlobal[chB]._absorvido = true;
     }
   });
-
   resultados = Object.values(mapaGlobal).filter(g => !g._absorvido).map(g => {
-    const diff      = Math.abs(g.debito - g.credito);
+    const diff = Math.abs(g.debito - g.credito);
     const cruzaMeses = g.meses.length > 1;
     const vinculado  = Object.keys(vinculos).includes(g.chaveBase) || Object.values(vinculos).includes(g.chaveBase);
-
-    // Ajustes: se vinculado manualmente → manual; se não → ajuste (mas pode ser vinculado)
-    if (g.isAjuste) {
-      const status = vinculado && diff <= tol ? 'manual' : 'ajuste';
-      return { ...g, diff, status };
-    }
-
+    if (g.isAjuste) return { ...g, diff, status: vinculado && diff <= tol ? 'manual' : 'ajuste' };
     let status;
     if      (vinculado  && diff <= tol) status = 'manual';
     else if (cruzaMeses && diff <= tol) status = 'cross';
@@ -382,86 +337,106 @@ function consolidarTudo() {
     else if (!g.credito && g.debito)    status = 'sem_nf';
     else if (diff > tol)                status = 'diff';
     else                                status = 'ok';
-
     return { ...g, diff, status };
   }).sort((a, b) => {
     const ord = { sem_pagto: 0, sem_nf: 1, diff: 2, ajuste: 3, manual: 4, cross: 5, ok: 6 };
     return (ord[a.status] ?? 3) - (ord[b.status] ?? 3);
   });
-
-  renderStats();
-  renderTabela(resultados);
+  renderStats(); renderTabela(listaFiltrada());
   document.getElementById('resBlock').style.display = '';
 }
 
-// ─── Render meses ─────────────────────────────────────────────────────────────
+// ── Filtros múltiplos ─────────────────────────────────────────────────────────
+function listaFiltrada() {
+  return filtrosAtivos.size === 0 ? resultados : resultados.filter(r => filtrosAtivos.has(r.status));
+}
+function toggleTodos() {
+  filtrosAtivos.clear();
+  document.querySelectorAll('.chip:not(.chip-todos)').forEach(c => c.classList.remove('on'));
+  document.getElementById('chip-todos').classList.add('on');
+  renderTabela(resultados);
+}
+function toggleChip(status, el) {
+  if (filtrosAtivos.has(status)) { filtrosAtivos.delete(status); el.classList.remove('on'); }
+  else                           { filtrosAtivos.add(status);    el.classList.add('on');    }
+  document.getElementById('chip-todos').classList.toggle('on', filtrosAtivos.size === 0);
+  renderTabela(listaFiltrada());
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
 function renderMeses() {
   const el = document.getElementById('mesesList');
   const meses = Object.keys(historico).sort();
-  if (!meses.length) {
-    el.innerHTML = '<span style="font-size:12px;color:var(--text2)">Nenhum mês carregado ainda.</span>';
-    return;
-  }
-  el.innerHTML = meses.map(m => `
-    <span class="mes-pill">
-      <i class="ti ti-calendar" style="font-size:13px"></i>
-      ${m}
-      <span class="del" onclick="removerMes('${m}')" title="Remover este mês">×</span>
-    </span>`).join('');
+  if (!meses.length) { el.innerHTML = '<span style="font-size:12px;color:var(--text2)">Nenhum mês carregado ainda.</span>'; return; }
+  el.innerHTML = meses.map(m => `<span class="mes-pill"><i class="ti ti-calendar" style="font-size:13px"></i>${m}<span class="del" onclick="removerMes('${m}')">×</span></span>`).join('');
 }
-
-function removerMes(mes) {
-  delete historico[mes];
-  consolidarTudo();
-  renderMeses();
-}
-
+function removerMes(mes) { delete historico[mes]; consolidarTudo(); renderMeses(); }
 function limparHistorico() {
   if (!Object.keys(historico).length) return;
   if (!confirm('Limpar todo o histórico?')) return;
-  historico = {}; vinculos = {}; resultados = []; dadosPendentes = null;
+  historico = {}; vinculos = {}; resultados = []; dadosPendentes = null; filtrosAtivos.clear();
   renderMeses();
   document.getElementById('resBlock').style.display = 'none';
   document.getElementById('nomearq').textContent = 'Clique para selecionar o arquivo Excel';
   document.getElementById('btnC').style.display = 'none';
   document.getElementById('padraoDet').textContent = '';
   document.getElementById('fileIn').value = '';
+  document.querySelectorAll('.chip:not(.chip-todos)').forEach(c => c.classList.remove('on'));
+  document.getElementById('chip-todos').classList.add('on');
 }
 
-// ─── Render stats ─────────────────────────────────────────────────────────────
 function renderStats() {
-  const sem   = resultados.filter(r => r.status !== 'ajuste');
-  const ok    = sem.filter(r => r.status === 'ok').length;
-  const man   = resultados.filter(r => r.status === 'manual').length; // inclui ajustes manuais
-  const cross = sem.filter(r => r.status === 'cross').length;
-  const pend  = sem.filter(r => ['diff', 'sem_pagto', 'sem_nf'].includes(r.status)).length;
+  const sem    = resultados.filter(r => r.status !== 'ajuste');
+  const ok     = sem.filter(r => r.status === 'ok').length;
+  const man    = resultados.filter(r => r.status === 'manual').length;
+  const cross  = sem.filter(r => r.status === 'cross').length;
+  const pend   = sem.filter(r => ['diff','sem_pagto','sem_nf'].includes(r.status)).length;
   const ajPend = resultados.filter(r => r.status === 'ajuste').length;
   document.getElementById('statsGrid').innerHTML = `
     <div class="stat"><div class="stat-lbl">Lançamentos</div><div class="stat-val">${sem.length}</div></div>
-    <div class="stat"><div class="stat-lbl">Conciliados</div><div class="stat-val" style="color:var(--ok)">${ok + man + cross}</div></div>
+    <div class="stat"><div class="stat-lbl">Conciliados</div><div class="stat-val" style="color:var(--ok)">${ok+man+cross}</div></div>
     <div class="stat"><div class="stat-lbl">Entre meses</div><div class="stat-val" style="color:#3C3489">${cross}</div></div>
-    <div class="stat"><div class="stat-lbl">Pendentes</div><div class="stat-val" style="color:var(--err)">${pend + ajPend}</div></div>`;
+    <div class="stat"><div class="stat-lbl">Pendentes</div><div class="stat-val" style="color:var(--err)">${pend+ajPend}</div></div>`;
 }
 
-// ─── Render tabela ────────────────────────────────────────────────────────────
 function renderTabela(list) {
-  if (!list.length) {
-    document.getElementById('tabWrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px">Nenhum item</div>';
-    return;
-  }
-
-  // Pode vincular: pendentes normais E ajustes ainda não vinculados
-  const podeConcManual = r => ['sem_pagto', 'sem_nf', 'diff', 'ajuste'].includes(r.status);
+  if (!list.length) { document.getElementById('tabWrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text2);font-size:13px">Nenhum item</div>'; return; }
+  const podeConcManual = r => ['sem_pagto','sem_nf','diff','ajuste'].includes(r.status);
   const podeDesfazer   = r => r.status === 'manual';
+  const sLabel = { ok:'Conciliado', manual:'Manual', cross:'Entre meses', diff:'Diferença', sem_pagto:'Sem pagamento', sem_nf:'Pagto s/ NF', ajuste:'Ajuste' };
+  const sBadge = { ok:'b-ok', manual:'b-man', cross:'b-hist', diff:'b-warn', sem_pagto:'b-err', sem_nf:'b-err', ajuste:'b-gray' };
 
-  const statusLabel = {
-    ok: 'Conciliado', manual: 'Manual', cross: 'Entre meses',
-    diff: 'Diferença', sem_pagto: 'Sem pagamento', sem_nf: 'Pagto s/ NF', ajuste: 'Ajuste'
-  };
-  const statusBadge = {
-    ok: 'b-ok', manual: 'b-man', cross: 'b-hist',
-    diff: 'b-warn', sem_pagto: 'b-err', sem_nf: 'b-err', ajuste: 'b-gray'
-  };
+  // Total da coluna Diferença
+  const totalDiff    = list.reduce((a, r) => a + (r.diff > 0.005 ? r.diff : 0), 0);
+  const qtdComDiff   = list.filter(r => r.diff > 0.005).length;
+
+  const linhas = list.map(r => {
+    const mesTag = r.meses && r.meses.length > 1
+      ? `<span title="${r.meses.sort().join(', ')}" style="font-size:11px;color:#3C3489;font-weight:500">${r.meses.length} meses</span>`
+      : `<span style="font-size:11px;color:var(--text2)">${(r.meses && r.meses[0]) || ''}</span>`;
+    const desc = r.isAjuste ? r.forn.replace(/.*?__ajuste__\d+_/i, '').substring(0, 60) : r.forn;
+    return `<tr>
+      <td style="font-family:var(--mono);font-size:12px" title="${r.nf}">${r.nf || (r.isAjuste ? '<span style="font-size:10px;color:var(--text2)">ajuste</span>' : '—')}</td>
+      <td title="${r.forn}">${desc}</td>
+      <td>${r.credito ? fmt(r.credito) : '—'}</td>
+      <td>${r.debito  ? fmt(r.debito)  : '—'}</td>
+      <td style="color:${r.diff < 0.06 ? 'var(--ok)' : 'var(--err)'};font-weight:500">${r.diff > 0.005 ? fmt(r.diff) : '—'}</td>
+      <td><span class="badge ${sBadge[r.status]||'b-gray'}">${sLabel[r.status]||r.status}</span></td>
+      <td>${mesTag}</td>
+      <td style="text-align:right;padding-right:6px">
+        ${podeConcManual(r) ? `<button class="btn btn-sm btn-azul" onclick='abrirModal(${JSON.stringify(r.chaveBase)})'>Vincular</button>` : ''}
+        ${podeDesfazer(r)   ? `<button class="btn btn-sm btn-red"  onclick='desfazerManual(${JSON.stringify(r.chaveBase)})'>Desvincular</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  const linhaTotalHTML = `<tr class="total-row">
+    <td colspan="4" style="text-align:right;font-size:12px;color:var(--text2)">
+      Total das diferenças (${qtdComDiff} ${qtdComDiff === 1 ? 'item' : 'itens'}):
+    </td>
+    <td style="color:${totalDiff < 0.06 ? 'var(--ok)' : 'var(--err)'}">${totalDiff > 0.005 ? fmt(totalDiff) : '—'}</td>
+    <td colspan="3"></td>
+  </tr>`;
 
   document.getElementById('tabWrap').innerHTML = `
   <table>
@@ -471,164 +446,161 @@ function renderTabela(list) {
       <col style="width:80px"><col style="width:115px">
       <col style="width:70px"><col style="width:115px">
     </colgroup>
-    <thead>
-      <tr>
-        <th>NF</th><th>Fornecedor / Descrição</th>
-        <th>Crédito (NF)</th><th>Débito (Pagto)</th>
-        <th>Diferença</th><th>Status</th><th>Meses</th><th></th>
-      </tr>
-    </thead>
-    <tbody>${list.map(r => {
-      const mesTag = r.meses && r.meses.length > 1
-        ? `<span title="${r.meses.sort().join(', ')}" style="font-size:11px;color:#3C3489;font-weight:500">${r.meses.length} meses</span>`
-        : `<span style="font-size:11px;color:var(--text2)">${(r.meses && r.meses[0]) || ''}</span>`;
-
-      // Ajustes: trunca a descrição longa para exibir mais limpo
-      const descExibir = r.isAjuste
-        ? r.forn.replace(/^.*?__ajuste__\d+_/i, '').substring(0, 60)
-        : r.forn;
-
-      return `<tr>
-        <td style="font-family:var(--mono);font-size:12px" title="${r.nf}">${r.nf || (r.isAjuste ? '<span style="font-size:10px;color:var(--text2)">ajuste</span>' : '—')}</td>
-        <td title="${r.forn}">${descExibir}</td>
-        <td>${r.credito ? fmt(r.credito) : '—'}</td>
-        <td>${r.debito  ? fmt(r.debito)  : '—'}</td>
-        <td style="color:${r.diff < 0.06 ? 'var(--ok)' : 'var(--err)'};font-weight:500">${r.diff > 0.005 ? fmt(r.diff) : '—'}</td>
-        <td><span class="badge ${statusBadge[r.status] || 'b-gray'}">${statusLabel[r.status] || r.status}</span></td>
-        <td>${mesTag}</td>
-        <td style="text-align:right;padding-right:6px">
-          ${podeConcManual(r) ? `<button class="btn btn-sm btn-azul" onclick='abrirModal(${JSON.stringify(r.chaveBase)})'>Vincular</button>` : ''}
-          ${podeDesfazer(r)   ? `<button class="btn btn-sm btn-red"  onclick='desfazerManual(${JSON.stringify(r.chaveBase)})'>Desvincular</button>` : ''}
-        </td>
-      </tr>`;
-    }).join('')}</tbody>
+    <thead><tr>
+      <th>NF</th><th>Fornecedor / Descrição</th>
+      <th>Crédito (NF)</th><th>Débito (Pagto)</th>
+      <th>Diferença</th><th>Status</th><th>Meses</th><th></th>
+    </tr></thead>
+    <tbody>${linhas}${linhaTotalHTML}</tbody>
   </table>`;
 }
 
-// ─── Modal de vínculo manual ──────────────────────────────────────────────────
+// ── Modal manual ──────────────────────────────────────────────────────────────
 function abrirModal(chave) {
   manualPendente = { chave, selecionado: null };
   const origem = resultados.find(r => r.chaveBase === chave);
-
   document.getElementById('modalTitle').textContent = 'Vincular manualmente';
   document.getElementById('modalSub').innerHTML =
     `<strong>${origem.isAjuste ? 'Ajuste' : 'NF ' + (origem.nf || 's/n')}</strong>: ${origem.forn.substring(0, 80)}<br>` +
     (origem.credito ? 'NF: ' + fmt(origem.credito) : '') +
     (origem.debito  ? ' | Pagamento: ' + fmt(origem.debito) : '') +
     ' | Mês: ' + (origem.meses || []).join(', ');
-
-  // Candidatos: pendentes normais + ajustes pendentes (exceto o próprio)
-  const candidatosNormais = resultados.filter(r =>
-    r.chaveBase !== chave &&
-    !r.isAjuste &&
-    !['ok', 'manual', 'cross'].includes(r.status)
-  );
-  const candidatosAjuste = resultados.filter(r =>
-    r.chaveBase !== chave &&
-    r.isAjuste &&
-    r.status === 'ajuste' // apenas ajustes ainda não vinculados
-  );
-
+  const candNorm  = resultados.filter(r => r.chaveBase !== chave && !r.isAjuste && !['ok','manual','cross'].includes(r.status));
+  const candAjust = resultados.filter(r => r.chaveBase !== chave && r.isAjuste && r.status === 'ajuste');
   let html = '';
-
-  if (candidatosNormais.length) {
+  if (candNorm.length) {
     html += '<div class="modal-group-label"><i class="ti ti-file-invoice" style="vertical-align:-2px;margin-right:4px"></i>Lançamentos pendentes</div>';
-    html += candidatosNormais.map(c => itemModalHTML(c)).join('');
+    html += candNorm.map(itemModalHTML).join('');
   }
-
-  if (candidatosAjuste.length) {
+  if (candAjust.length) {
     html += '<div class="modal-group-label"><i class="ti ti-adjustments-horizontal" style="vertical-align:-2px;margin-right:4px"></i>Ajustes pendentes</div>';
-    html += candidatosAjuste.map(c => itemModalHTML(c)).join('');
+    html += candAjust.map(itemModalHTML).join('');
   }
-
-  if (!html) {
-    html = '<div style="text-align:center;padding:1rem;color:var(--text2);font-size:12px">Não há lançamentos ou ajustes pendentes para vincular.</div>';
-  }
-
+  if (!html) html = '<div style="text-align:center;padding:1rem;color:var(--text2);font-size:12px">Não há lançamentos pendentes para vincular.</div>';
   document.getElementById('modalLista').innerHTML = html;
   document.getElementById('modalWrap').style.display = 'flex';
 }
-
 function itemModalHTML(c) {
-  const label = c.isAjuste ? 'Ajuste' : ({ diff: 'Diferença', sem_pagto: 'Sem pagamento', sem_nf: 'Pagto s/ NF' }[c.status] || c.status);
+  const label = c.isAjuste ? 'Ajuste' : ({ diff:'Diferença', sem_pagto:'Sem pagamento', sem_nf:'Pagto s/ NF' }[c.status] || c.status);
   const badge = c.isAjuste ? 'b-gray' : (c.status === 'diff' ? 'b-warn' : 'b-err');
   const desc  = c.isAjuste ? c.forn.substring(0, 70) : c.forn;
-  return `
-    <div class="item-sel" onclick="selecionarCandidato('${c.chaveBase.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this)">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-        <span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.forn}">${desc}</span>
-        <span class="badge ${badge}" style="flex-shrink:0">${label}</span>
-      </div>
-      <div style="font-size:11px;color:var(--text2);margin-top:3px">
-        ${c.isAjuste ? '' : 'NF ' + (c.nf || 's/n') + ' &nbsp;·&nbsp; '}
-        ${(c.meses || []).join(', ')} &nbsp;·&nbsp;
-        ${c.credito ? 'NF: ' + fmt(c.credito) : ''}
-        ${c.debito  ? ' Pagto: ' + fmt(c.debito) : ''}
-      </div>
-    </div>`;
+  return `<div class="item-sel" onclick="selecionarCandidato('${c.chaveBase.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this)">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <span style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${c.forn}">${desc}</span>
+      <span class="badge ${badge}" style="flex-shrink:0">${label}</span>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:3px">
+      ${c.isAjuste ? '' : 'NF ' + (c.nf || 's/n') + ' &nbsp;·&nbsp; '}
+      ${(c.meses || []).join(', ')} &nbsp;·&nbsp;
+      ${c.credito ? 'NF: ' + fmt(c.credito) : ''}${c.debito ? ' Pagto: ' + fmt(c.debito) : ''}
+    </div>
+  </div>`;
 }
-
 function selecionarCandidato(chave, el) {
   document.querySelectorAll('.item-sel').forEach(e => e.classList.remove('marcado'));
   el.classList.add('marcado');
   manualPendente.selecionado = chave;
 }
-
 function confirmarManual() {
   if (!manualPendente || !manualPendente.selecionado) { alert('Selecione um lançamento.'); return; }
   vinculos[manualPendente.chave] = manualPendente.selecionado;
-  fecharModal();
-  consolidarTudo();
+  fecharModal(); consolidarTudo();
 }
-
 function desfazerManual(chave) {
   delete vinculos[chave];
   Object.keys(vinculos).forEach(k => { if (vinculos[k] === chave) delete vinculos[k]; });
   consolidarTudo();
 }
+function fecharModal()    { document.getElementById('modalWrap').style.display = 'none'; manualPendente = null; }
+function fecharModalBg(e) { if (e.target === document.getElementById('modalWrap')) fecharModal(); }
 
-function fecharModal() {
-  document.getElementById('modalWrap').style.display = 'none';
-  manualPendente = null;
-}
-
-function fecharModalBg(e) {
-  if (e.target === document.getElementById('modalWrap')) fecharModal();
-}
-
-// ─── Filtro ───────────────────────────────────────────────────────────────────
-function filt(tipo, el) {
-  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-  renderTabela(tipo === 'todos' ? resultados : resultados.filter(r => r.status === tipo));
-}
-
-// ─── Exportar CSV ─────────────────────────────────────────────────────────────
+// ── Exportar CSV ──────────────────────────────────────────────────────────────
 function exportCSV() {
-  const h = ['NF', 'Fornecedor', 'Credito_NF', 'Debito_Pagamento', 'Diferenca', 'Status', 'Meses'];
-  const rows = resultados.map(r => [
-    r.nf || '', r.forn,
-    r.credito.toFixed(2), r.debito.toFixed(2), r.diff.toFixed(2),
-    r.status, (r.meses || []).join('/')
-  ]);
+  const lista = listaFiltrada();
+  const totalDiff = lista.reduce((a, r) => a + (r.diff > 0.005 ? r.diff : 0), 0);
+  const h = ['NF','Fornecedor','Credito_NF','Debito_Pagamento','Diferenca','Status','Meses'];
+  const rows = lista.map(r => [r.nf||'', r.forn, r.credito.toFixed(2), r.debito.toFixed(2), r.diff.toFixed(2), r.status, (r.meses||[]).join('/')]);
+  rows.push(['','TOTAL DAS DIFERENÇAS','','', totalDiff.toFixed(2),'','']);
   baixarCSV([h, ...rows], 'conciliacao.csv');
 }
 
+// ── Exportar Excel ────────────────────────────────────────────────────────────
+function exportXLSX() {
+  const lista = listaFiltrada();
+  const totalDiff  = lista.reduce((a, r) => a + (r.diff > 0.005 ? r.diff : 0), 0);
+  const qtdComDiff = lista.filter(r => r.diff > 0.005).length;
+  const sLabel = { ok:'Conciliado', manual:'Manual', cross:'Entre meses', diff:'Diferença', sem_pagto:'Sem pagamento', sem_nf:'Pagto s/ NF', ajuste:'Ajuste' };
+
+  // ── Aba principal ──────────────────────────────────────────────────────────
+  const wsData = [['NF', 'Fornecedor / Descrição', 'Crédito (NF)', 'Débito (Pagamento)', 'Diferença', 'Status', 'Meses']];
+  lista.forEach(r => {
+    wsData.push([
+      r.nf || (r.isAjuste ? 'ajuste' : ''),
+      r.isAjuste ? r.forn.replace(/.*?__ajuste__\d+_/i, '').substring(0, 80) : r.forn,
+      r.credito > 0 ? r.credito : null,
+      r.debito  > 0 ? r.debito  : null,
+      r.diff > 0.005 ? r.diff   : null,
+      sLabel[r.status] || r.status,
+      (r.meses || []).join(' / ')
+    ]);
+  });
+  // Linha de total
+  wsData.push([`Total das diferenças (${qtdComDiff} itens)`, '', null, null, totalDiff > 0.005 ? totalDiff : null, '', '']);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  ws['!cols'] = [{ wch: 12 }, { wch: 48 }, { wch: 18 }, { wch: 18 }, { wch: 16 }, { wch: 18 }, { wch: 22 }];
+
+  // Formato moeda nas colunas C, D, E (índices 2,3,4) — linhas de dados + total
+  const fmtBRL = '"R$" #,##0.00';
+  for (let i = 1; i < wsData.length; i++) {
+    [2, 3, 4].forEach(ci => {
+      const val = wsData[i][ci];
+      if (typeof val === 'number') {
+        const col = String.fromCharCode(67 + ci - 2); // C, D, E
+        const cellRef = col + (i + 1);
+        if (ws[cellRef]) ws[cellRef].z = fmtBRL;
+      }
+    });
+  }
+
+  // Negrito na linha de header e linha de total
+  const totalRowIdx = wsData.length; // 1-based
+  if (!ws['!rows']) ws['!rows'] = [];
+  ws['!rows'][0] = { hpt: 18 };
+  ws['!rows'][totalRowIdx - 1] = { hpt: 18 };
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Conciliação');
+
+  // ── Aba histórico ──────────────────────────────────────────────────────────
+  const histData = [['Mês', 'NF', 'Fornecedor', 'Crédito (NF)', 'Débito (Pagamento)', 'Status']];
+  Object.entries(historico).sort(([a],[b]) => a.localeCompare(b)).forEach(([mes, grupos]) => {
+    grupos.forEach(g => histData.push([mes, g.nf || '', g.forn, g.credito || null, g.debito || null, g.status || '']));
+  });
+  const wsHist = XLSX.utils.aoa_to_sheet(histData);
+  wsHist['!cols'] = [{ wch: 10 }, { wch: 12 }, { wch: 48 }, { wch: 16 }, { wch: 16 }, { wch: 16 }];
+  XLSX.utils.book_append_sheet(wb, wsHist, 'Histórico');
+
+  // Nome do arquivo com data
+  const hoje = new Date();
+  const dataStr = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0') + '-' + String(hoje.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, `conciliacao_${dataStr}.xlsx`);
+}
+
 function exportarHistoricoCSV() {
-  const h = ['Mes', 'NF', 'Fornecedor', 'Credito_NF', 'Debito_Pagamento', 'Status'];
+  const h = ['Mes','NF','Fornecedor','Credito_NF','Debito_Pagamento','Status'];
   const rows = [];
   Object.entries(historico).forEach(([mes, grupos]) => {
-    grupos.forEach(g => rows.push([mes, g.nf || '', g.forn, g.credito.toFixed(2), g.debito.toFixed(2), g.status || '']));
+    grupos.forEach(g => rows.push([mes, g.nf||'', g.forn, g.credito.toFixed(2), g.debito.toFixed(2), g.status||'']));
   });
   baixarCSV([h, ...rows], 'historico_conciliacao.csv');
 }
-
 function baixarCSV(linhas, nome) {
   const csv = linhas.map(r => r.join(';')).join('\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' }));
-  a.download = nome;
-  a.click();
+  a.download = nome; a.click();
 }
 </script>
 </body>
