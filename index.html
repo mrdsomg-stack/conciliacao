@@ -225,6 +225,11 @@ function extrairNFNovo(s)   { const m = s.match(/N[ºO°]\s*\.?\s*0*(\d+)(?:\/\d
 function extrairNFAntigo(s) { const m = s.match(/(?:NF[SE\-\s]*e?|FATURA\s*N[ºO°]?)\s*\.?\s*(\d[\d\.]*)/i); return m ? m[1].replace(/\./g, '') : ''; }
 function ehPadraoNovo(s)    { return /^(N[ºO°]|NOTA\s+FISCAL)/i.test(s.trim()); }
 function ehAjuste(s)        { return /ajuste|pagamento\s+a\s+maior|pagamento\s+a\s+menor|desconto|estorno/i.test(s); }
+
+// Remove sufixos gerados por erro do sistema (ex: "TESSTE", "TESTE" no final do complemento)
+const SUFIXOS_SISTEMA = /\s+TESS?T[EI]?\s*$/i;
+function limparCompl(s) { return s.replace(SUFIXOS_SISTEMA, '').trim(); }
+
 function extrairFornNovo(s, val) {
   if (val < 0) { const m = s.match(/\bDE\s+(.+)$/i); return m ? m[1].trim() : s; }
   else         { const m = s.match(/\/\d+\s*[-–]\s*(.+)$/i); return m ? m[1].trim() : s; }
@@ -268,7 +273,7 @@ function parsearGrupos(dados, mes) {
   document.getElementById('padraoDet').innerHTML = 'Padrão: <strong>' + (padrao === 'novo' ? 'Novo' : 'Antigo') + '</strong>';
   const mapa = {};
   dados.forEach((row, idx) => {
-    const compl = String(row[cCompl] || '').trim();
+    const compl = limparCompl(String(row[cCompl] || '').trim());
     const val   = parsVal(row[cVal]);
     const dat   = String(row[cDat] || '');
     if (!compl || compl === 'Total' || compl.startsWith('Filtro')) return;
