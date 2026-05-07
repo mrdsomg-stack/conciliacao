@@ -249,6 +249,19 @@ function ehAjuste(s)        { return /ajuste|pagamento\s+a\s+maior|pagamento\s+a
 
 // Remove sufixos gerados por erro do sistema (ex: "TESSTE", "TESTE" no final do complemento)
 const SUFIXOS_SISTEMA = /\s+TESS?T[EI]?\s*$/i;
+
+// Extrai NF de qualquer posição no texto (para lançamentos manuais fora do padrão)
+function extrairNFQualquer(s) {
+  const m = s.match(/NF[ºo°\s]*\.?\s*0*(\d{4,})/i);
+  return m ? m[1] : '';
+}
+// Extrai fornecedor de lançamento manual: remove data inicial, pega texto antes do NFº
+function extrairFornManual(s) {
+  s = s.replace(/^\d{2}\/\d{2}\/\d{2,4}\s+/, ''); // remove data dd/mm/aa
+  const m = s.match(/^(.+?)\s+NF[ºo°]/i);
+  if (m) return m[1].trim().toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+  return s.toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g,' ').replace(/\s+/g,' ').trim().substring(0,80);
+}
 function limparCompl(s) { return s.replace(SUFIXOS_SISTEMA, '').trim(); }
 
 function extrairFornNovo(s, val) {
@@ -383,11 +396,24 @@ function parsearGrupos(dados, mes) {
     }
     let chave, nf, forn;
     if (padrao === 'novo') {
-      nf = extrairNFNovo(compl); if (!nf) return;
-      forn = extrairFornNovo(compl, val);
-      // Inclui fornecedor na chave — essencial quando múltiplos fornecedores têm a mesma NF pequena (ex: PFs com NF 3, 4, 5...)
-      const fornNorm = forn.toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
-      chave = 'NF|' + nf + '|' + fornNorm;
+      nf = extrairNFNovo(compl);
+      if (!nf) {
+        // Fallback: tenta extrair NF de qualquer posição (lançamentos manuais fora do padrão)
+        nf = extrairNFQualquer(compl);
+        if (nf) {
+          forn = extrairFornManual(compl);
+          chave = 'NF|' + nf + '|' + forn.toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+        } else {
+          // Sem nenhuma NF identificável: trata como lançamento manual sem NF
+          forn = extrairFornManual(compl);
+          const fornNorm = forn.toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+          chave = 'SEMF|' + fornNorm + '|' + Math.abs(val).toFixed(2);
+        }
+      } else {
+        forn = extrairFornNovo(compl, val);
+        const fornNorm = forn.toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+        chave = 'NF|' + nf + '|' + fornNorm;
+      }
     } else {
       nf = extrairNFAntigo(compl);
       const normForn = normalizar(compl);
