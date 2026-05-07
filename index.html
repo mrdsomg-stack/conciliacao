@@ -287,11 +287,22 @@ function parsearGrupos(dados, mes) {
     let chave, nf, forn;
     if (padrao === 'novo') {
       nf = extrairNFNovo(compl); if (!nf) return;
-      chave = 'NF|' + nf; forn = extrairFornNovo(compl, val);
+      forn = extrairFornNovo(compl, val);
+      // Inclui fornecedor na chave — essencial quando múltiplos fornecedores têm a mesma NF pequena (ex: PFs com NF 3, 4, 5...)
+      const fornNorm = forn.toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+      chave = 'NF|' + nf + '|' + fornNorm;
     } else {
       nf = extrairNFAntigo(compl);
-      if (nf) { const tok = normalizar(compl).split(' ').slice(0, 2).join(' '); chave = 'NF|' + nf + '|' + tok; forn = normalizar(compl); }
-      else    { chave = 'VAL|' + Math.abs(val).toFixed(2); forn = normalizar(compl); }
+      const normForn = normalizar(compl);
+      if (nf) {
+        // Nome completo na chave — evita colisão entre fornecedores diferentes com mesma NF pequena
+        chave = 'NF|' + nf + '|' + normForn;
+        forn  = normForn;
+      } else {
+        // Sem NF: nome completo + valor — evita misturar fornecedores com mesmo valor
+        chave = 'SEMF|' + normForn + '|' + Math.abs(val).toFixed(2);
+        forn  = normForn;
+      }
     }
     if (!mapa[chave]) mapa[chave] = { chave, nf, forn, credito: 0, debito: 0, status: '', linhas: [], mes };
     mapa[chave].linhas.push({ idx, compl, val, dat });
