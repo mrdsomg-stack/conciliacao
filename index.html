@@ -177,7 +177,14 @@
     <div class="modal">
       <div class="modal-title" id="modalTitle">Vincular manualmente</div>
       <div class="modal-sub" id="modalSub"></div>
-      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px">Selecione o lançamento para vincular:</div>
+      <div style="position:relative;margin-bottom:10px">
+        <i class="ti ti-search" style="position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text2);font-size:14px;pointer-events:none"></i>
+        <input type="text" id="modalBusca"
+          placeholder="Pesquisar por fornecedor, NF ou valor..."
+          oninput="filtrarModal()"
+          style="width:100%;padding:7px 10px 7px 30px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;font-family:var(--font)">
+      </div>
+      <div style="font-size:12px;font-weight:500;color:var(--text2);margin-bottom:6px" id="modalContador"></div>
       <div class="modal-lista" id="modalLista"></div>
       <div style="display:flex;gap:8px;margin-top:14px;justify-content:flex-end">
         <button class="btn" onclick="fecharModal()">Cancelar</button>
@@ -625,6 +632,8 @@ function renderTabela(list) {
 }
 
 // ── Modal manual ──────────────────────────────────────────────────────────────
+let _modalCandidatos = []; // guardados para filtragem
+
 function abrirModal(chave) {
   manualPendente = { chave, selecionado: null };
   const origem = resultados.find(r => r.chaveBase === chave);
@@ -634,20 +643,68 @@ function abrirModal(chave) {
     (origem.credito ? 'NF: ' + fmt(origem.credito) : '') +
     (origem.debito  ? ' | Pagamento: ' + fmt(origem.debito) : '') +
     ' | Mês: ' + (origem.meses || []).join(', ');
+
+  // Salvar todos os candidatos para permitir filtragem posterior
   const candNorm  = resultados.filter(r => r.chaveBase !== chave && !r.isAjuste && !['ok','manual','cross'].includes(r.status));
   const candAjust = resultados.filter(r => r.chaveBase !== chave && r.isAjuste && r.status === 'ajuste');
-  let html = '';
-  if (candNorm.length) {
-    html += '<div class="modal-group-label"><i class="ti ti-file-invoice" style="vertical-align:-2px;margin-right:4px"></i>Lançamentos pendentes</div>';
-    html += candNorm.map(itemModalHTML).join('');
-  }
-  if (candAjust.length) {
-    html += '<div class="modal-group-label"><i class="ti ti-adjustments-horizontal" style="vertical-align:-2px;margin-right:4px"></i>Ajustes pendentes</div>';
-    html += candAjust.map(itemModalHTML).join('');
-  }
-  if (!html) html = '<div style="text-align:center;padding:1rem;color:var(--text2);font-size:12px">Não há lançamentos pendentes para vincular.</div>';
-  document.getElementById('modalLista').innerHTML = html;
+  _modalCandidatos = [
+    ...candNorm.map(r  => ({ ...r, _grupo: 'normal' })),
+    ...candAjust.map(r => ({ ...r, _grupo: 'ajuste' })),
+  ];
+
+  // Limpar busca e renderizar lista completa
+  document.getElementById('modalBusca').value = '';
+  renderModalLista(_modalCandidatos);
   document.getElementById('modalWrap').style.display = 'flex';
+  // Focar no campo de busca automaticamente
+  setTimeout(() => document.getElementById('modalBusca').focus(), 80);
+}
+
+function filtrarModal() {
+  const termo = document.getElementById('modalBusca').value.toLowerCase().trim();
+  if (!termo) { renderModalLista(_modalCandidatos); return; }
+
+  const filtrados = _modalCandidatos.filter(c => {
+    const forn = c.forn.toLowerCase();
+    const nf   = (c.nf || '').toLowerCase();
+    // Busca por fornecedor ou NF
+    if (forn.includes(termo) || nf.includes(termo)) return true;
+    // Busca por valor: aceita "3000", "3.000" ou "3.000,00"
+    const termoNum = parseFloat(termo.replace(/\./g,'').replace(',','.'));
+    if (!isNaN(termoNum)) {
+      if (Math.abs(c.credito - termoNum) < 0.05 || Math.abs(c.debito - termoNum) < 0.05 || Math.abs(c.diff - termoNum) < 0.05) return true;
+    }
+    return false;
+  });
+  renderModalLista(filtrados);
+}
+
+function renderModalLista(lista) {
+  const total = _modalCandidatos.length;
+  const mostrando = lista.length;
+  const contador = document.getElementById('modalContador');
+  if (total === 0) {
+    contador.textContent = '';
+    document.getElementById('modalLista').innerHTML = '<div style="text-align:center;padding:1rem;color:var(--text2);font-size:12px">Não há lançamentos pendentes para vincular.</div>';
+    return;
+  }
+  contador.textContent = mostrando === total
+    ? `${total} lançamento${total !== 1 ? 's' : ''} disponível${total !== 1 ? 'is' : ''}`
+    : `${mostrando} de ${total} lançamento${total !== 1 ? 's' : ''}`;
+
+  const normais = lista.filter(r => r._grupo === 'normal');
+  const ajustes = lista.filter(r => r._grupo === 'ajuste');
+  let html = '';
+  if (normais.length) {
+    html += '<div class="modal-group-label"><i class="ti ti-file-invoice" style="vertical-align:-2px;margin-right:4px"></i>Lançamentos pendentes</div>';
+    html += normais.map(itemModalHTML).join('');
+  }
+  if (ajustes.length) {
+    html += '<div class="modal-group-label"><i class="ti ti-adjustments-horizontal" style="vertical-align:-2px;margin-right:4px"></i>Ajustes pendentes</div>';
+    html += ajustes.map(itemModalHTML).join('');
+  }
+  if (!html) html = '<div style="text-align:center;padding:1.5rem;color:var(--text2);font-size:12px"><i class="ti ti-search-off" style="font-size:24px;display:block;margin-bottom:6px;opacity:.4"></i>Nenhum resultado para esta busca</div>';
+  document.getElementById('modalLista').innerHTML = html;
 }
 function itemModalHTML(c) {
   const label = c.isAjuste ? 'Ajuste' : ({ diff:'Diferença', sem_pagto:'Sem pagamento', sem_nf:'Pagto s/ NF' }[c.status] || c.status);
@@ -680,7 +737,13 @@ function desfazerManual(chave) {
   Object.keys(vinculos).forEach(k => { if (vinculos[k] === chave) delete vinculos[k]; });
   consolidarTudo();
 }
-function fecharModal()    { document.getElementById('modalWrap').style.display = 'none'; manualPendente = null; }
+function fecharModal() {
+  document.getElementById('modalWrap').style.display = 'none';
+  document.getElementById('modalBusca').value = '';
+  document.getElementById('modalContador').textContent = '';
+  _modalCandidatos = [];
+  manualPendente = null;
+}
 function fecharModalBg(e) { if (e.target === document.getElementById('modalWrap')) fecharModal(); }
 
 // ── Exportar CSV ──────────────────────────────────────────────────────────────
