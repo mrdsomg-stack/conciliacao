@@ -131,6 +131,25 @@
     </div>
   </div>
 
+  <!-- Planilha de controle (histórico anterior) -->
+  <div class="card">
+    <div class="sec-title"><i class="ti ti-table-import"></i> Planilha de controle (histórico anterior) <span id="controleTag" style="font-size:11px;font-weight:400;color:var(--text2);margin-left:6px"></span></div>
+    <div class="info-box">
+      <i class="ti ti-info-circle" style="font-size:14px;vertical-align:-2px;margin-right:4px"></i>
+      Opcional. Carregue sua planilha de controle existente (colunas: Data, Complemento, Débito, Crédito, Saldo).
+      Os lançamentos já conciliados nela serão usados como histórico base antes dos meses do razão.
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="upload-box" style="flex:1;min-width:200px">
+        <input type="file" id="fileControle" accept=".xlsx,.xls,.csv" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%" onchange="carregarControle(this)">
+        <i class="ti ti-file-spreadsheet" style="font-size:28px;color:var(--text2)"></i>
+        <div style="font-size:13px;font-weight:500;margin-top:6px" id="nomeControle">Clique para selecionar</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:3px">Formato: Data, Complemento, Débito, Crédito, Saldo</div>
+      </div>
+      <button class="btn btn-sm btn-red" id="btnLimparControle" style="display:none" onclick="limparControle()"><i class="ti ti-x"></i> Remover</button>
+    </div>
+  </div>
+
   <div class="card">
     <div class="sec-title"><i class="ti ti-upload"></i> Carregar novo mês</div>
     <div class="info-box">
@@ -193,7 +212,8 @@
         <span class="filter-hint"><i class="ti ti-info-circle" style="vertical-align:-2px"></i> Clique em vários filtros para combinar</span>
         <div style="margin-left:auto;display:flex;gap:6px">
           <button class="btn btn-sm" onclick="exportCSV()"><i class="ti ti-download"></i> CSV</button>
-          <button class="btn btn-sm btn-green" onclick="exportXLSX()"><i class="ti ti-file-spreadsheet"></i> Excel</button>
+          <button class="btn btn-sm btn-green" onclick="exportXLSX()"><i class="ti ti-file-spreadsheet"></i> Excel (análise)</button>
+          <button class="btn btn-sm btn-green" style="background:var(--purple-bg);color:var(--purple-text);border-color:var(--purple-border)" onclick="exportXLSXControle()"><i class="ti ti-file-spreadsheet"></i> Excel (controle)</button>
         </div>
       </div>
       <div style="overflow-x:auto" id="tabWrap"></div>
@@ -205,6 +225,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 let historico      = {};
+let controleData   = null;   // grupos da planilha de controle
 let resultados     = [];
 let manualPendente = null;
 let vinculos       = {};
@@ -243,6 +264,82 @@ function detectarPadrao(dados, cCompl) {
   return novo >= antigo ? 'novo' : 'antigo';
 }
 const fmt = v => 'R$ ' + Math.abs(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// ─── Planilha de controle ─────────────────────────────────────────────────────
+function parsValControle(v) {
+  if (typeof v === 'number') return v;
+  const s = String(v).replace(/R\$\s*/g,'').replace(/\s/g,'').replace(',','.');
+  const n = parseFloat(s.replace(/[^\d.\-]/g,''));
+  return isNaN(n) ? 0 : n;
+}
+
+function extrairNFControle(s) {
+  // Padrão: "000000507 C DE S MESQUITA LTDA" -> nf=507, forn="C DE S MESQUITA LTDA"
+  const m = s.match(/^0*(\d+)\s+(.+)$/);
+  if (m) return { nf: m[1], forn: m[2].trim().toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g,' ').replace(/\s+/g,' ').trim() };
+  return { nf: '', forn: s.toUpperCase().replace(/[^A-ZÀ-Ÿ0-9 ]/g,' ').replace(/\s+/g,' ').trim() };
+}
+
+function parsearControle(dados) {
+  const cols = Object.keys(dados[0] || {});
+  const ci   = k => cols.find(c => c.toLowerCase().includes(k.toLowerCase())) || null;
+  const cCompl = ci('compl') || ci('hist') || cols[1];
+  const cDeb   = ci('debit') || ci('déb')  || cols[2];
+  const cCred  = ci('cred')  || cols[3];
+  const cDat   = ci('data')  || ci('dat')  || cols[0];
+
+  const mapa = {};
+  dados.forEach((row, idx) => {
+    const compl = String(row[cCompl] || '').trim();
+    if (!compl || compl === 'Total' || compl.startsWith('Filtro') || compl === 'Complemento') return;
+
+    const deb  = Math.abs(parsValControle(row[cDeb]  || 0));
+    const cred = Math.abs(parsValControle(row[cCred] || 0));
+    const dat  = String(row[cDat] || '');
+
+    if (ehAjuste(compl)) {
+      const chave = '__ctrl_ajuste__' + idx + '_' + compl;
+      mapa[chave] = { chave, nf: '', forn: compl, debito: deb, credito: cred, fonte: 'controle', isAjuste: true, linhas: [{ compl, val: deb > 0 ? deb : -cred, dat }] };
+      return;
+    }
+
+    const { nf, forn } = extrairNFControle(compl);
+    const chave = nf ? 'NF|' + nf + '|' + forn : 'SEMF|' + forn + '|' + Math.max(deb, cred).toFixed(2);
+
+    if (!mapa[chave]) mapa[chave] = { chave, nf, forn, debito: 0, credito: 0, fonte: 'controle', isAjuste: false, linhas: [] };
+    mapa[chave].debito  += deb;
+    mapa[chave].credito += cred;
+    mapa[chave].linhas.push({ compl, val: deb > 0 ? deb : -cred, dat });
+  });
+
+  return Object.values(mapa);
+}
+
+function carregarControle(input) {
+  const file = input.files[0]; if (!file) return;
+  document.getElementById('nomeControle').textContent = file.name;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const dados = XLSX.utils.sheet_to_json(ws, { defval: '' });
+    controleData = parsearControle(dados);
+    const tag = document.getElementById('controleTag');
+    tag.textContent = controleData.length + ' lançamentos carregados';
+    document.getElementById('btnLimparControle').style.display = '';
+    if (Object.keys(historico).length) consolidarTudo();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function limparControle() {
+  controleData = null;
+  document.getElementById('nomeControle').textContent = 'Clique para selecionar';
+  document.getElementById('controleTag').textContent = '';
+  document.getElementById('btnLimparControle').style.display = 'none';
+  document.getElementById('fileControle').value = '';
+  if (Object.keys(historico).length) consolidarTudo();
+}
 
 function carregarArquivo(input) {
   const file = input.files[0]; if (!file) return;
@@ -322,6 +419,23 @@ function processarMes() {
 function consolidarTudo() {
   const tol = parseFloat(document.getElementById('tol').value) || 0.05;
   const mapaGlobal = {};
+
+  // Injetar lançamentos da planilha de controle como base histórica
+  if (controleData && controleData.length) {
+    controleData.forEach(g => {
+      if (!mapaGlobal[g.chave]) {
+        mapaGlobal[g.chave] = {
+          chaveBase: g.chave, nf: g.nf, forn: g.forn,
+          credito: 0, debito: 0, status: '',
+          meses: ['controle'], linhas: g.linhas || [],
+          isAjuste: g.isAjuste, temControle: true
+        };
+      }
+      mapaGlobal[g.chave].credito += g.credito;
+      mapaGlobal[g.chave].debito  += g.debito;
+    });
+  }
+
   Object.entries(historico).forEach(([mes, grupos]) => {
     grupos.forEach(g => {
       const chaveBase = g.isAjuste ? g.chave : (g.chave.startsWith(mes + '|') ? g.chave.slice(mes.length + 1) : g.chave);
@@ -390,7 +504,11 @@ function removerMes(mes) { delete historico[mes]; consolidarTudo(); renderMeses(
 function limparHistorico() {
   if (!Object.keys(historico).length) return;
   if (!confirm('Limpar todo o histórico?')) return;
-  historico = {}; vinculos = {}; resultados = []; dadosPendentes = null; filtrosAtivos.clear();
+  historico = {}; vinculos = {}; resultados = []; dadosPendentes = null; filtrosAtivos.clear(); controleData = null;
+  document.getElementById('nomeControle').textContent = 'Clique para selecionar';
+  document.getElementById('controleTag').textContent = '';
+  document.getElementById('btnLimparControle').style.display = 'none';
+  document.getElementById('fileControle').value = '';
   renderMeses();
   document.getElementById('resBlock').style.display = 'none';
   document.getElementById('nomearq').textContent = 'Clique para selecionar o arquivo Excel';
@@ -428,9 +546,12 @@ function renderTabela(list) {
   const qtdComDiff   = list.filter(r => r.diff > 0.005).length;
 
   const linhas = list.map(r => {
-    const mesTag = r.meses && r.meses.length > 1
-      ? `<span title="${r.meses.sort().join(', ')}" style="font-size:11px;color:#3C3489;font-weight:500">${r.meses.length} meses</span>`
-      : `<span style="font-size:11px;color:var(--text2)">${(r.meses && r.meses[0]) || ''}</span>`;
+    const mesesSemControle = (r.meses || []).filter(m => m !== 'controle');
+    const temCtrl = (r.meses || []).includes('controle');
+    const ctrlTag = temCtrl ? `<span style="font-size:10px;font-weight:500;background:var(--purple-bg);color:var(--purple-text);padding:1px 6px;border-radius:10px;margin-right:3px">controle</span>` : '';
+    const mesTag = mesesSemControle.length > 1
+      ? ctrlTag + `<span title="${mesesSemControle.sort().join(', ')}" style="font-size:11px;color:#3C3489;font-weight:500">${mesesSemControle.length} meses</span>`
+      : ctrlTag + `<span style="font-size:11px;color:var(--text2)">${mesesSemControle[0] || ''}</span>`;
     const desc = r.isAjuste ? r.forn.replace(/.*?__ajuste__\d+_/i, '').substring(0, 60) : r.forn;
     return `<tr>
       <td style="font-family:var(--mono);font-size:12px" title="${r.nf}">${r.nf || (r.isAjuste ? '<span style="font-size:10px;color:var(--text2)">ajuste</span>' : '—')}</td>
@@ -612,6 +733,87 @@ function exportXLSX() {
   const hoje = new Date();
   const dataStr = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0') + '-' + String(hoje.getDate()).padStart(2,'0');
   XLSX.writeFile(wb, `conciliacao_${dataStr}.xlsx`);
+}
+
+// ── Exportar no padrão da planilha de controle ───────────────────────────────
+function exportXLSXControle() {
+  const lista = listaFiltrada();
+  if (!lista.length) { alert('Nenhum item para exportar.'); return; }
+
+  const wsData = [['Data', 'Complemento', 'Debito', 'Credito', 'Saldo']];
+
+  // Ordenar cronologicamente: controle primeiro, depois meses do razão
+  const listaSorted = [...lista].sort((a, b) => {
+    const prioA = (a.meses || []).includes('controle') && (a.meses || []).length === 1 ? '0000' : (a.meses || []).filter(m => m !== 'controle').sort()[0] || '9999';
+    const prioB = (b.meses || []).includes('controle') && (b.meses || []).length === 1 ? '0000' : (b.meses || []).filter(m => m !== 'controle').sort()[0] || '9999';
+    return prioA.localeCompare(prioB);
+  });
+
+  listaSorted.forEach(r => {
+    const desc = r.isAjuste
+      ? r.forn.replace(/.*?__ajuste__\d+_/i, '').substring(0, 100)
+      : (r.nf ? r.nf.padStart(9, '0') + ' ' + r.forn : r.forn);
+
+    const deb  = r.debito  > 0.005 ? r.debito  : null;
+    const cred = r.credito > 0.005 ? -r.credito : null;
+
+    // Saldo da linha = débito + crédito (não acumulado)
+    const saldo = (deb || 0) + (cred || 0);
+
+    // Data: prioriza data original das linhas; se veio só do controle usa serial da linha original;
+    // se veio do razão usa o primeiro mês do razão
+    let dataSerial = null;
+    const mesesRazao = (r.meses || []).filter(m => m !== 'controle').sort();
+    if (mesesRazao.length > 0) {
+      // Tem mês do razão — usa o primeiro
+      dataSerial = mesStrToSerial(mesesRazao[0]);
+    } else if (r.linhas && r.linhas.length > 0) {
+      // Veio só do controle — usa a data original da linha (já é serial do Excel)
+      const dataBruta = r.linhas[0].dat;
+      const n = parseFloat(String(dataBruta).replace(/[^\d.]/g, ''));
+      if (!isNaN(n) && n > 40000) dataSerial = n; // serial válido do Excel (> 2009)
+    }
+
+    wsData.push([dataSerial, desc, deb, cred, saldo]);
+  });
+
+  // Linha de total geral (soma de todos os saldos)
+  const totalSaldo = listaSorted.reduce((acc, r) => {
+    const deb  = r.debito  > 0.005 ? r.debito  : 0;
+    const cred = r.credito > 0.005 ? -r.credito : 0;
+    return acc + deb + cred;
+  }, 0);
+  wsData.push([null, null, null, null, totalSaldo]);
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  const fmtData = 'DD/MM/YYYY';
+  const fmtBRL  = '#,##0.00';
+  for (let i = 1; i < wsData.length; i++) {
+    const cellA = ws['A' + (i + 1)];
+    if (cellA && typeof cellA.v === 'number') cellA.z = fmtData;
+    ['C','D','E'].forEach(col => {
+      const cell = ws[col + (i + 1)];
+      if (cell && cell.v !== null && cell.v !== undefined) cell.z = fmtBRL;
+    });
+  }
+
+  ws['!cols'] = [{ wch: 12 }, { wch: 60 }, { wch: 18 }, { wch: 18 }, { wch: 18 }];
+  XLSX.utils.book_append_sheet(wb, ws, 'Controle');
+
+  const hoje = new Date();
+  const dataStr = hoje.getFullYear() + '-' + String(hoje.getMonth()+1).padStart(2,'0') + '-' + String(hoje.getDate()).padStart(2,'0');
+  XLSX.writeFile(wb, `controle_${dataStr}.xlsx`);
+}
+
+// Converte "2024-03" para número serial do Excel (1º dia do mês)
+function mesStrToSerial(mesStr) {
+  if (!mesStr || mesStr === 'controle') return null;
+  const [ano, mes] = mesStr.split('-').map(Number);
+  if (!ano || !mes) return null;
+  const d = new Date(ano, mes - 1, 1);
+  return Math.floor((d - new Date(1899, 11, 30)) / 86400000);
 }
 
 function exportarHistoricoCSV() {
